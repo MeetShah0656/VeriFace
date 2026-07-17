@@ -25,89 +25,54 @@ graph TD
 
 ## 🛠️ Technology Stack Breakdown
 
-### 1. Core Framework & Language
-* **Next.js 15 (App Router)**: The base full-stack React framework. Used for client-side routing, static pre-rendering, layout structuring, and serving assets.
-* **React 19**: The core component framework. It manages state transitions, camera stream bindings, hooks, and pages.
-* **TypeScript**: Enforces strict typing across students, classes, attendance sessions, and biometric vectors, reducing runtime exceptions during binary model inference.
-
-### 2. Client-Side AI & Biometrics (The Core Pipeline)
-To avoid high server costs and maintain absolute user privacy, all AI processing happens client-side in the browser:
-* **MediaPipe Tasks Vision (`@mediapipe/tasks-vision`)**: Used for real-time bounding box detection and 2D facial landmark tracking.
-  * *Under the hood:* It loads the `blaze_face_short_range.tflite` model in the browser using WebAssembly.
-* **ONNX Runtime Web (`onnxruntime-web`)**: A high-performance WebAssembly (WASM) execution engine that runs neural network models directly inside the browser.
-  * *Under the hood:* It loads the ArcFace model (`arc.onnx`), utilizing multi-threaded WASM with SIMD instructions to run neural network inference on CPU at ~30 FPS.
-* **ArcFace Model (`arc.onnx`)**: A state-of-the-art deep learning convolutional neural network (CNN) model. It takes a `112x112` face crop and generates a unique **512-dimensional vector (embedding)** representing the mathematical features of the face.
-* **Cosine Similarity Matcher**: A lightweight mathematical formula (dot product of L2-normalized embedding arrays) that calculates the similarity between two faces. A similarity of `> 0.65` indicates a matching student.
-
-### 3. Offline-First Storage & Cloud Database
-* **IndexedDB (`idb` wrapper)**: A low-level transactional browser database used to store large volumes of structured data (rosters, classes, attendance records, and facial embeddings) directly on the teacher's device.
-  * *Why:* Allows the app to continue scanning faces and saving attendance sessions in remote areas with zero network connection.
-* **Firebase Cloud Firestore**: The cloud NoSQL database that acts as the source of truth when online.
-* **Firebase Authentication**: Provides secure sign-in (via Email/Password and Google OAuth) for teachers.
-* **Firebase Security Rules (`firestore.rules`)**: Enforces server-side isolation so that teachers can *only* read and write their own classes, students, and biometric data.
-* **Sync Engine (`services/syncService.ts`)**: Runs in the background, listening to online/offline status changes. When internet is restored, it batch-uploads local records in IndexedDB to Firestore and pulls down any new changes.
-
-### 4. Styling, Visuals & UI Components
-* **Tailwind CSS v4**: Utility-first CSS framework used for UI layout, responsive breakpoints, grid systems, and dark/light themes.
-* **Framer Motion**: Powering fluid UI micro-animations, dashboard transitions, and success/error overlay animations during camera scans.
-* **Lucide React**: Clean, modern SVG icon set used across menus, sidebar items, and action states.
-* **Recharts**: Data visualization library used on the dashboard to build attendance logs, daily/weekly charts, and trends.
-
-### 5. Form Management & Utilities
-* **React Hook Form & Zod**: Form handling and schema validation. Used on the student registration and class creation pages to ensure correct schema types before database writes.
-* **XLSX (SheetJS)**: Client-side Excel generator that allows teachers to instantly download complete class matrices (dates vs. students attendance statuses) directly from the browser.
-* **Canvas Confetti**: Visual celebration effect triggered upon successful student registration or complete attendance scans.
+| Category | Technology / Library | Purpose & Under-the-Hood Mechanics |
+| :--- | :--- | :--- |
+| **Core Framework** | **Next.js 15 (App Router)** | Base React framework. Manages layout templates, client-side routing, asset optimization, static pre-rendering, and page delivery. |
+| **UI Library** | **React 19** | Handles interactive state updates, binds DOM refs to webcam video feeds, manages hooks, and handles page rendering. |
+| **Language** | **TypeScript** | Enforces strict schemas and data interfaces for students, classes, attendance sessions, and 512D biometric vector arrays. |
+| **AI - Detection** | **MediaPipe Face Detector** | Performs rapid bounding box detection and returns 2D coordinates for 6 key face landmarks (eyes, nose, mouth, ears) via a lightweight BlazeFace WASM model. |
+| **AI - Inference** | **ONNX Runtime Web** | A high-performance WebAssembly (WASM) compiler running ArcFace neural net models inside the browser using multi-threaded SIMD CPU features. |
+| **AI - Model** | **ArcFace CNN (`arc.onnx`)** | Deep learning model loaded from Hugging Face. Analyzes a `112x112` square face crop and converts it into a unique **512-dimensional vector embedding**. |
+| **AI - Metric** | **Cosine Similarity** | Calculates similarity using the dot product of two L2-normalized float arrays. Any score `> 0.65` verifies a successful student match. |
+| **Offline Cache** | **IndexedDB (`idb` wrapper)** | Browser-local transactional storage used to cache student rosters, classes, embeddings, and attendance logs, enabling 100% internet-free scans. |
+| **Cloud Database** | **Cloud Firestore** | Remote NoSQL database backing up teacher profiles, class setups, and verified rosters once online. |
+| **Authentication** | **Firebase Auth** | Manages teacher secure authentication (Email/Password & Google OAuth). |
+| **Security** | **Firebase Security Rules** | Isolates teacher nodes server-side so teachers can only access database records owned by their authenticated UID (`request.auth.uid`). |
+| **Styling** | **Tailwind CSS v4** | Utility-first compiler powering layouts, responsive grids, transitions, and dark/light color themes. |
+| **Animations** | **Framer Motion** | Controls micro-animations, loading states, success screens, and alert popups. |
+| **Visual Elements** | **Lucide React** | High-quality, lightweight SVG icon package used throughout dashboard dashboards. |
+| **Charts** | **Recharts** | Interactive SVG charts rendering historical student attendance analytics. |
+| **Forms** | **React Hook Form & Zod** | Handles validation rules for client-side forms (student registration, class registration details). |
+| **Data Export** | **SheetJS (`xlsx`)** | Generates formatted Excel spreadsheets client-side, allowing teachers to download attendance summaries directly. |
+| **Celebration** | **Canvas Confetti** | Fires confetti bursts on the screen during successful registration and scan sessions. |
 
 ---
 
-## 📁 Project Directory Breakdown
+## 📁 Project Directory Structure
 
-```
-VeriFace/
-├── app/                      # Next.js 15 App Router pages, layouts, and routes
-│   ├── (console)/            # Private authenticated routes (Classes, Students, Sessions, Dashboard)
-│   ├── login/                # Authentication page (Google / Email)
-│   ├── globals.css           # Global Tailwind stylesheet and theme variables
-│   └── layout.tsx            # Main HTML layout wrapper
-│
-├── components/               # Shared UI elements (buttons, layout panels, dialogs)
-│
-├── contexts/                 # Global React states (Auth user state, TanStack query cache provider)
-│
-├── features/                 # Modular page feature scopes (Dashboard components, stats cards)
-│
-├── hooks/                    # Reusable custom hooks
-│   ├── useFaceRecognition.ts # Core hook managing MediaPipe/ONNX cameras, loop, and crops
-│   └── useOnlineStatus.ts    # Tracks browser connection state (online vs offline)
-│
-├── lib/                      # Third-party SDK initializations (Firebase configurations)
-│
-├── public/                   # Static browser-accessible models and assets
-│   ├── mediapipe/            # Local WASM files and blaze_face model binary
-│   └── ort-wasm-...          # local WebAssembly binaries for ONNX runtime web
-│
-├── services/                 # Business logic and database API files
-│   ├── db.ts                 # IndexedDB initialization and transactional queries
-│   ├── arcfaceService.ts     # ONNX session loading, image preprocessing, and similarity matching
-│   ├── mediapipeService.ts   # MediaPipe face detection model initializer
-│   └── syncService.ts        # Sync manager merging IndexedDB and Firestore
-│
-└── utils/                    # Helper files
-    └── faceQuality.ts        # Math checks verifying blur, yaw/pitch, and brightness
-```
+| Directory / File | Core Responsibility | Key Contents |
+| :--- | :--- | :--- |
+| **`app/`** | Application Routing & Layouts | Contains route subfolders like `login`, `(console)/dashboard`, `(console)/students`, layouts, and `globals.css` style files. |
+| **`components/`** | Common UI Components | Reusable components (e.g., modals, form buttons, dashboard panels). |
+| **`contexts/`** | Application-Wide Context Providers | Authentication context (`auth-context.tsx`) and React Query cache provider (`query-provider.tsx`). |
+| **`features/`** | Route-Specific Widgets & UI Panels | Dashboard visual cards, charts, and table logic. |
+| **`hooks/`** | Custom React State Hooks | `useFaceRecognition.ts` (camera control and model processing) and `useOnlineStatus.ts`. |
+| **`lib/`** | Shared Library Clients | Firebase configuration and client instance variables (`firebase.ts`). |
+| **`public/`** | Static Browser Assets | Local WASM binaries for MediaPipe (`public/mediapipe`) and ONNX Runtime. |
+| **`services/`** | core Business Logic & Database Engines | IndexedDB API interface (`db.ts`), ArcFace pre-processing (`arcfaceService.ts`), and offline sync orchestration (`syncService.ts`). |
+| **`utils/`** | Independent Helper Functions | `faceQuality.ts` containing Laplacian variance (blur check), luminance (brightness check), and head angles math. |
+| **`firestore.rules`** | Database Access Controls | Server-side security configuration file deployed to Firebase console. |
 
 ---
 
 ## ⚡ The Recognition Pipeline (Step-by-Step)
 
-When a student stands in front of the camera:
-1. **Camera Capture**: React binds the camera stream to a `<video>` element.
-2. **Face Detection**: The `useFaceRecognition` hook throttles the feed and feeds frames to the **MediaPipe Face Detector** at a specified interval (e.g. 250ms).
-3. **Face Quality Filter**: The detected face bounding box coordinates are analyzed by `faceQuality.ts` checking:
-   * **Sharpness**: Laplacian variance calculation filters out camera motion blur.
-   * **Illumination**: Relative luminance calculation flags dark or overexposed frames.
-   * **Angle**: Landmark coordinates measure head yaw and pitch, prompting the user if they are looking away.
-4. **Square Crop & Padding**: The face is cropped into a perfect square with **15% padding** using an HTML Canvas to prevent stretching distortion.
-5. **Embedding Extraction**: The square crop canvas is passed into the **ArcFace ONNX model** to generate a normalized 512D float array.
-6. **Cosine Similarity**: The vector is dot-product compared with all registered student vectors in the active class batch.
-7. **Mark Attendance**: If a similarity score exceeds the threshold, the backend registers the entry in IndexedDB/Firestore, plays a chime, and runs a confetti splash.
+| Step | Phase | Operation | Technical Mechanism |
+| :---: | :--- | :--- | :--- |
+| **1** | **Camera Capture** | Binds input stream to rendering window | React assigns user webcam stream to an HTML5 `<video>` element with matching layout proportions. |
+| **2** | **Face Detection** | Identifies faces in the stream | The `useFaceRecognition` hook throttles frames at 250ms and sends them to **MediaPipe Face Detector** WASM. |
+| **3** | **Quality Check** | Filters out problematic samples | Coordinates and canvas crops are analyzed by `faceQuality.ts` using **Laplacian variance** (blur) and **relative luminance** (illumination). |
+| **4** | **Square Crop** | Normalizes face crop dimensions | Finds the bounding box center, takes the max of `width` and `height` to form a square, adds **15% padding**, and draws to a `112x112` canvas. |
+| **5** | **Biometric Math** | Computes face embedding vector | Canvas pixel values are normalized into `[-1, 1]` ranges and run through **ArcFace ONNX model** to generate a 512D float array. |
+| **6** | **Roster Match** | Compares current scan against database | Calculates the dot product of the current embedding array with stored class student embeddings loaded in **IndexedDB**. |
+| **7** | **Resolution** | Updates records and alerts user | If score is `> 0.65`, records a `present` state log, plays a double-note chime, fires screen confetti, and triggers background sync. |

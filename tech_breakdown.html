@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeriFace | Technology & Architecture Breakdown</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.15);
+      --accent: #a78bfa;
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.15);
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 2.5rem 1.5rem;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(167, 139, 250, 0.05) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--primary-glow);
+      color: var(--accent);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Cards Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title span {
+      background: var(--primary-glow);
+      color: var(--primary);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background-color: rgba(31, 41, 55, 0.6);
+      color: var(--text-main);
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      color: var(--text-main);
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .tech-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .tech-badge.primary {
+      background: var(--primary-glow);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #cbd5e1;
+    }
+
+    .tech-badge.success {
+      background: var(--success-glow);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #a7f3d0;
+    }
+
+    /* Pipeline Steps */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .pipeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--card-border);
+    }
+
+    .pipeline-step {
+      position: relative;
+    }
+
+    .pipeline-bullet {
+      position: absolute;
+      left: -2rem;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--bg-color);
+      border: 3px solid var(--card-border);
+      z-index: 2;
+      transition: border-color 0.2s ease;
+    }
+
+    .pipeline-step:hover .pipeline-bullet {
+      border-color: var(--primary);
+    }
+
+    .pipeline-content {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .pipeline-step:hover .pipeline-content {
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .pipeline-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-num {
+      background: var(--primary-glow);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .step-title {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .code-style {
+      font-family: var(--font-mono);
+      color: #f43f5e;
+      background: rgba(244, 63, 94, 0.05);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">SaaS Technical Sheet</div>
+      <h1>VeriFace Architecture Breakdown</h1>
+      <p class="subtitle">A guide explaining the tech stack, directories, and real-time biometric pipeline powering VeriFace.</p>
+    </header>
+
+    <!-- Top Grid: Architectural Overview -->
+    <div class="grid">
+      <!-- Architecture Intro -->
+      <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+        <div class="card-title">
+          <span>⚙️</span> Hybrid Serverless Edge System
+        </div>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          VeriFace utilizes **Edge Biometrics**. All camera ingestion, face bounding estimation, blur filtering, crop alignment, and convolutional feature embedding happen completely in the user's browser via high-speed WebAssembly compiles.
+        </p>
+        <p style="color: var(--text-muted);">
+          Firestore rules and Firebase Auth manage access on the cloud database, enabling secure, multi-device backup syncs whenever network signals are present.
+        </p>
+      </div>
+
+      <!-- Realtime Pipeline -->
+      <div class="card">
+        <div class="card-title">
+          <span>⚡</span> Biometric Recognition Pipeline
+        </div>
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">01</span>
+                <span class="step-title">Camera Ingestion</span>
+              </div>
+              <p class="step-desc">Webcam stream is routed directly into an HTML5 <code class="code-style">&lt;video&gt;</code> viewport.</p>
+            </div>
+          </div>
+
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">02</span>
+                <span class="step-title">MediaPipe BlazeFace</span>
+              </div>
+              <p class="step-desc">Evaluates camera frames every 250ms via WebAssembly to estimate 2D coordinates of facial features.</p>
+            </div>
+          </div>
+
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">03</span>
+                <span class="step-title">Biometric Quality Filter</span>
+              </div>
+              <p class="step-desc">Applies <strong>Laplacian variance</strong> to evaluate sharpness (blur) and <strong>relative luminance</strong> checks to filter bad lighting.</p>
+            </div>
+          </div>
+
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">04</span>
+                <span class="step-title">Padded Square Crop</span>
+              </div>
+              <p class="step-desc">Identifies bounding center, calculates maximum face dimensions, adds <strong>15% margin</strong>, and draws a clean `112x112` canvas crop.</p>
+            </div>
+          </div>
+
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">05</span>
+                <span class="step-title">ArcFace ONNX Inference</span>
+              </div>
+              <p class="step-desc">Normalizes pixels to `[-1, 1]` and passes them to ArcFace CNN using ONNX Runtime Web to generate a <strong>512-dimension vector</strong>.</p>
+            </div>
+          </div>
+
+          <div class="pipeline-step">
+            <div class="pipeline-bullet"></div>
+            <div class="pipeline-content">
+              <div class="pipeline-header">
+                <span class="step-num">06</span>
+                <span class="step-title">Cosine Similarity Match</span>
+              </div>
+              <p class="step-desc">Calculates dot-product vectors against stored embeddings in IndexedDB. Any match score <code class="code-style">&gt; 0.65</code> resolves the user.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech Stack Table -->
+    <section style="margin-bottom: 3.5rem;">
+      <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <span style="color: var(--primary)">🛠️</span> Technology Stack Detailed Breakdown
+      </h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">Category</th>
+              <th style="width: 25%;">Technology / Library</th>
+              <th style="width: 55%;">Purpose & Under-the-Hood Mechanics</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Core Framework</strong></td>
+              <td><span class="tech-badge primary">Next.js 15 (App Router)</span></td>
+              <td>Base React framework. Handles asset layouts, client-side routing transitions, Turbopack compiling, static pre-rendering, and page assets load.</td>
+            </tr>
+            <tr>
+              <td><strong>UI Engine</strong></td>
+              <td><span class="tech-badge primary">React 19</span></td>
+              <td>Orchestrates interactive states, handles rendering updates, and ties canvas/video hooks together during runtime loops.</td>
+            </tr>
+            <tr>
+              <td><strong>Type Safety</strong></td>
+              <td><span class="tech-badge">TypeScript</span></td>
+              <td>Enforces typed models for student datasets, rosters, sessions, and biometric similarity parameters.</td>
+            </tr>
+            <tr>
+              <td><strong>Face Detection</strong></td>
+              <td><span class="tech-badge success">MediaPipe Tasks Vision</span></td>
+              <td>Loads the `blaze_face_short_range.tflite` model in the browser via WebAssembly to track faces and estimate 6 key facial coordinates.</td>
+            </tr>
+            <tr>
+              <td><strong>ONNX Execution</strong></td>
+              <td><span class="tech-badge success">ONNX Runtime Web</span></td>
+              <td>Injects multi-threaded WASM with SIMD instructions to perform heavy convolutional neural network operations on the browser CPU.</td>
+            </tr>
+            <tr>
+              <td><strong>Face Model</strong></td>
+              <td><span class="tech-badge success">ArcFace CNN (`arc.onnx`)</span></td>
+              <td>A feature extraction neural network model. Translates canvas crop shapes into a 512-dimensional floating vector representing face metrics.</td>
+            </tr>
+            <tr>
+              <td><strong>Offline Cache</strong></td>
+              <td><span class="tech-badge">IndexedDB (`idb` wrapper)</span></td>
+              <td>Browser-level database storing student metadata, rosters, sync status indices, settings, and local face embeddings.</td>
+            </tr>
+            <tr>
+              <td><strong>Cloud DB</strong></td>
+              <td><span class="tech-badge">Cloud Firestore</span></td>
+              <td>Remote NoSQL server database managing secure persistent backups. Syncs records when the client transitions from offline to online.</td>
+            </tr>
+            <tr>
+              <td><strong>Authentication</strong></td>
+              <td><span class="tech-badge">Firebase Auth</span></td>
+              <td>Handles secure login profiles for teachers (supporting Google Sign-In and standard Email).</td>
+            </tr>
+            <tr>
+              <td><strong>Styling</strong></td>
+              <td><span class="tech-badge">Tailwind CSS v4</span></td>
+              <td>Utility stylesheet compiler driving custom responsive grid displays and modern dark modes.</td>
+            </tr>
+            <tr>
+              <td><strong>Animations</strong></td>
+              <td><span class="tech-badge">Framer Motion</span></td>
+              <td>Fires interactive screen transitions, loading indicators, and card modal actions.</td>
+            </tr>
+            <tr>
+              <td><strong>Charts</strong></td>
+              <td><span class="tech-badge">Recharts</span></td>
+              <td>Renders real-time visual charts displaying attendance rates and class historical figures.</td>
+            </tr>
+            <tr>
+              <td><strong>Data Export</strong></td>
+              <td><span class="tech-badge">SheetJS (`xlsx`)</span></td>
+              <td>Compiles attendance grids client-side and formats them into download-ready Excel files.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Folder Structure Table -->
+    <section>
+      <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <span style="color: var(--primary)">📁</span> Project Directory Map
+      </h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 25%;">Directory Path</th>
+              <th style="width: 35%;">Primary Purpose</th>
+              <th style="width: 40%;">Key Contents & Scope</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="code-style">app/</code></td>
+              <td>Next.js Page Routes & UI Framework</td>
+              <td>Contains page routes: `/login`, `/dashboard`, `/classes`, and `/students/register`. Also holds root layout page bindings.</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">components/</code></td>
+              <td>Shared Global UI components</td>
+              <td>Custom elements such as layout sidebar panels, headers, search bars, and dialog modals.</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">contexts/</code></td>
+              <td>Application Global States</td>
+              <td>Manages teacher sign-in session contexts (`auth-context.tsx`) and client-side server query caches.</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">hooks/</code></td>
+              <td>Reusable React Life Hooks</td>
+              <td>`useFaceRecognition.ts` (manages camera feeds, quality verification, and crop pipelines) and online status trackers.</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">public/</code></td>
+              <td>Static Web Resources</td>
+              <td>Hosts local WebAssembly bundles for MediaPipe Face Detector and ONNX WASM runtimes.</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">services/</code></td>
+              <td>Engines & Business Logic APIs</td>
+              <td>IndexedDB schema actions (`db.ts`), ArcFace models loading and cosine checks (`arcfaceService.ts`), and sync monitors (`syncService.ts`).</td>
+            </tr>
+            <tr>
+              <td><code class="code-style">utils/</code></td>
+              <td>Math & Quality Calculations</td>
+              <td>Filters poor inputs using Laplacian checks (blur) and relative brightness metrics (`faceQuality.ts`).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
