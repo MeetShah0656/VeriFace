@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if the user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Check if the user owns the specific document
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Teachers Collection
+    match /teachers/{teacherId} {
+      allow read, write: if isOwner(teacherId);
+    }
+
+    // Settings Collection
+    match /settings/{teacherId} {
+      allow read, write: if isOwner(teacherId);
+    }
+
+    // Classes Collection
+    match /classes/{classId} {
+      allow read, write: if isSignedIn() && 
+        (resource == null || resource.data.teacher_id == request.auth.uid) && 
+        (request.resource == null || request.resource.data.teacher_id == request.auth.uid);
+    }
+
+    // Students Collection
+    match /students/{studentId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Face Embeddings Collection
+    match /face_embeddings/{embeddingId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Attendance Sessions Collection
+    match /attendance_sessions/{sessionId} {
+      allow read, write: if isSignedIn() && 
+        (resource == null || resource.data.teacher_id == request.auth.uid) && 
+        (request.resource == null || request.resource.data.teacher_id == request.auth.uid);
+    }
+
+    // Attendance Records Collection
+    match /attendance_records/{recordId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Audit Logs Collection
+    match /audit_logs/{logId} {
+      allow read, write: if isSignedIn() && 
+        (resource == null || resource.data.teacher_id == request.auth.uid) && 
+        (request.resource == null || request.resource.data.teacher_id == request.auth.uid);
+    }
+  }
+}
